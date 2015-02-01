@@ -1,7 +1,7 @@
 local PDATA_KEY = "ttt_pending_slay"
 local DEFAULT_SLAY_REASON = "RDMing"
 
-local function addSlay(calling_ply, target_ply, slays, reason, remove_slay)
+local function addSlay(calling_ply, target_ply, reasons, slays, remove_slay)
 	local currentSlay = target_ply:GetPData(PDATA_KEY, false)
 	if remove_slay then
 		if not currentSlay then
@@ -32,8 +32,8 @@ local function addSlay(calling_ply, target_ply, slays, reason, remove_slay)
 end
 local addslay = ulx.command("TTT", "ulx addslay", addSlay, "!addslay", true)
 addslay:addParam{type=ULib.cmds.PlayerArg}
-addslay:addParam{type=ULib.cmds.NumArg, default=1, max=3, hint="Rounds", ULib.cmds.optional, ULib.cmds.round}
 addslay:addParam{type=ULib.cmds.StringArg, hint="Reason",  ULib.cmds.optional}
+addslay:addParam{type=ULib.cmds.NumArg, default=1, max=3, hint="Rounds", ULib.cmds.optional, ULib.cmds.round}
 addslay:addParam{type=ULib.cmds.BoolArg, invisible=true}
 addslay:defaultAccess(ULib.ACCESS_ADMIN)
 addslay:help("Slays target for a number of rounds.")
@@ -91,9 +91,11 @@ addslayid:setOpposite("ulx rslayid", {_, _, _, _, true}, "!rslayid", true)
 local function spectate(calling_ply, target_ply, unspec)
 	if unspec then
 		target_ply:ConCommand("ttt_spectator_mode 0")
+		ulx.fancyLogAdmin(calling_ply, "#A has moved #T from spectate.", target_ply)
 	else
 		target_ply:ConCommand("ttt_spectator_mode 1")
 		target_ply:ConCommand("ttt_cl_idlepopup")
+		ulx.fancyLogAdmin(calling_ply, "#A has forced #T to spectate.", target_ply)
 	end
 end
 local spec = ulx.command("TTT", "ulx spec", spectate, "!spec", true)
