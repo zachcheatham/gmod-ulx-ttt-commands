@@ -1,8 +1,9 @@
------------------
--- TTT AddSlay --
------------------
+-----------------------------
+-- TTT AddSlay / AddImpair --
+-----------------------------
 
 local SLAY_PDATA_KEY = "ttt_pending_slay"
+local IMPAIR_PDATA_KEY = "ttt_pending_impair"
 
 function ulx.getSlayInfo(ply)
 	local slayString = ply:GetPData(SLAY_PDATA_KEY, false)
@@ -33,10 +34,51 @@ function ulx.getSlayInfo(ply)
 	end
 end
 
-local function slayListRoundBegin()
+function ulx.getImpairInfo(ply)
+	local impairString = ply:GetPData(IMPAIR_PDATA_KEY, false)
+
+	if not impairString then
+		return 0, false
+	else
+		local data = string.Explode(";", impairString)
+		if table.Count(data) > 1 then
+			local damage = tonumber(data[1])
+			
+			if damage > 0 then
+				local reason = data[2]
+				
+				for i=3,table.Count(data) do
+					reason = reason .. data[i]
+				end
+				
+				return damage, reason
+			else
+				ply:RemovePData(IMPAIR_PDATA_KEY)
+				return 0, false
+			end
+		else
+			ply:RemovePData(IMPAIR_PDATA_KEY)
+			return 0, false
+		end
+	end
+end
+
+local function beingRound()
 	for _, ply in pairs(player.GetAll()) do
 		if ply:Alive() then
-			local slays, reason = ulx.getSlayInfo(ply)
+			local damage, damageReason = ulx.getImpairInfo(ply)
+			local slays, slayReason = ulx.getSlayInfo(ply)
+			
+			if damage > 0 then
+				-- Damage
+				ply:TakeDamage(damage)
+				
+				-- Delete damage
+				ply:RemovePData(IMPAIR_PDATA_KEY)
+				
+				-- Tell everyone what happened
+				ULib.tsayColor(nil, false, Color(255,0,0), ply:Nick(), Color(205, 205, 205), " has been damaged " .. damage .. " hp for " .. damageReason .. " in a previous round.")
+			end
 			
 			if slays > 0 then
 				-- Kill
@@ -52,16 +94,17 @@ local function slayListRoundBegin()
 				end
 				
 				-- Tell everyone what happened and maybe they won't kill each other
-				ULib.tsayColor(nil, false, Color(255,0,0), ply:Nick(), Color(205, 205, 205), " has been killed for " .. reason .. " in a previous round.")
+				ULib.tsayColor(nil, false, Color(255,0,0), ply:Nick(), Color(205, 205, 205), " has been killed for " .. slayReason .. " in a previous round.")
 			end
 		end
 	end
 end
-hook.Add("TTTBeginRound", "ULXSlayList", slayListRoundBegin)
+hook.Add("TTTBeginRound", "ULXSlayImpairList", beingRound)
 
 -----------------------
 -- Vote Silent Round --
 -----------------------
+
 local function setULXGag(ply, gagged)
 	ply.ulx_gagged = gagged
 	ply:SetNWBool("ulx_gagged", gagged)
