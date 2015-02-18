@@ -87,7 +87,7 @@ local function beingRound()
 				-- Save data for next round
 				slays = slays - 1
 				if slays > 0 then
-					local slayString = slays .. ";" .. reason
+					local slayString = slays .. ";" .. slayReason
 					ply:SetPData(SLAY_PDATA_KEY, slayString)
 				else
 					ply:RemovePData(SLAY_PDATA_KEY)
